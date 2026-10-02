@@ -232,8 +232,8 @@ export function App() {
             {rows.map((r) => (
               <tr key={r.id}>
                 <td>{r.id}</td>
-                <td>{r.temp_c}</td>{/* h05-trap-cols */}
                 <td>{r.probe_id}</td>
+                <td>{r.temp_c}</td>
                 <td>
                   <span class={verdictClass(r.verdict, r.status)}>
                     {displayVerdict(r)}

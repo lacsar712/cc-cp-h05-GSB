@@ -50,11 +50,17 @@ def run_once(conn) -> bool:
     try:
         finish(conn, row["id"], float(row["temp_c"]))
     except Exception:
-        conn.execute(
-            "UPDATE probe_readings SET status = 'pending' WHERE id = %s",
-            (row["id"],),
-        )
-        conn.commit()
+        # 判定失败：先回滚已中止的事务，再把行复位为 pending，
+        # 避免行卡在 processing 状态成为残留错位行。
+        conn.rollback()
+        try:
+            conn.execute(
+                "UPDATE probe_readings SET status = 'pending' WHERE id = %s",
+                (row["id"],),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
         raise
     return True
 

@@ -8,7 +8,6 @@ from aiohttp import web
 from passlib.context import CryptContext
 
 from db import create_pool, ensure_schema_async, seed_if_empty
-from rules import judge_temp
 
 SECRET = os.environ.get("JWT_SECRET", "coldchain-probe-dev-secret")
 pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -139,8 +138,8 @@ async def create_reading(request: web.Request) -> web.Response:
         VALUES ($1, $2, 'pending', $3, now())
         RETURNING id, probe_id, temp_c, verdict, reason, status, created_by, created_at, processed_at
         """,
-        __import__('h05_extra_trap', fromlist=['prepare_insert']).prepare_insert(probe_id, temp_c)[0],
-        __import__('h05_extra_trap', fromlist=['prepare_insert']).prepare_insert(probe_id, temp_c)[1],
+        probe_id,
+        temp_c,
         user["username"],
     )
     return web.json_response(
