@@ -36,7 +36,9 @@ def _decode_user(token: str | None) -> dict | None:
     sub = payload.get("sub")
     if sub not in USERS:
         return None
-    return {"username": sub, "role": payload.get("role")}
+    # 角色一律以服务端账号表为准，不信任令牌自带的 role 声明，
+    # 防止值班员借伪造/过期签发的令牌拿到写权限。
+    return {"username": sub, "role": USERS[sub]["role"]}
 
 
 def require_user(request: web.Request) -> dict:
@@ -139,8 +141,8 @@ async def create_reading(request: web.Request) -> web.Response:
         VALUES ($1, $2, 'pending', $3, now())
         RETURNING id, probe_id, temp_c, verdict, reason, status, created_by, created_at, processed_at
         """,
-        __import__('h05_extra_trap', fromlist=['prepare_insert']).prepare_insert(probe_id, temp_c)[0],
-        __import__('h05_extra_trap', fromlist=['prepare_insert']).prepare_insert(probe_id, temp_c)[1],
+        probe_id,
+        temp_c,
         user["username"],
     )
     return web.json_response(
